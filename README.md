@@ -30,3 +30,41 @@ Quand on recharge les données, on lit les nœuds un par un dans le même ordre 
 
 8. Fonction print_table_header
 J’ai ajouté cette fonction pour afficher un en-tête propre avant de montrer les données. Pourquoi ? Parce que c’est plus clair pour l’utilisateur et ça donne un aspect bien organisé.
+
+Fichier repl.c
+Ce fichier gère toute l’interaction avec l’utilisateur. J’ai séparé les tâches en plusieurs petites fonctions pour que ce soit facile à lire et à comprendre.
+
+1. Fonction create_input_buffer
+J’ai choisi de créer un buffer dynamique pour stocker les commandes utilisateur. Pourquoi ? Parce que ça permet de gérer des commandes de tailles variables sans gaspiller de mémoire.
+
+2. Fonction print_prompt
+Simple mais efficace. J’ai ajouté une invite (db >) pour que l’utilisateur sache quand il peut entrer une commande. Ça rend le programme plus intuitif.
+
+3. Fonction read_input
+Je lis les commandes utilisateur ligne par ligne avec fgets. J’ai ajouté une étape pour supprimer le caractère de nouvelle ligne (\n) parce que ça évite des bugs lors de la comparaison des chaînes.
+
+4. Fonction close_input_buffer
+Une fois qu’on a fini avec le buffer, je libère la mémoire. Pourquoi ? Parce que c’est une bonne pratique et que ça évite les fuites mémoire.
+
+5. Fonction handle_meta_command
+J’ai séparé les méta-commandes (exit) des commandes SQL-like (insert, select, delete). Pourquoi ? Parce que ces commandes modifient le comportement global du programme (comme quitter ou sauvegarder) et non les données de l’arbre.
+
+6. Fonction prepare_statement
+Cette fonction analyse les commandes pour voir si elles correspondent à insert, select ou delete. J’ai choisi une comparaison simple de chaînes (strncmp) parce que c’est clair et suffisant pour ce programme.
+
+7. Fonction execute_statement
+C’est le cœur de l’exécution. Elle appelle les fonctions de btree.c en fonction de la commande détectée :
+
+insert : Pour ajouter un nœud.
+select : Pour afficher l’arbre.
+delete : Pour retirer un nœud.
+J’ai séparé l’analyse (prepare_statement) et l’exécution pour garder les responsabilités claires.
+
+8. Fonction load_database
+Je recharge les données depuis un fichier pour que l’utilisateur puisse reprendre là où il s’était arrêté. Pourquoi ? Parce que ça rend le programme beaucoup plus utile et pratique.
+
+9. Fonction save_database
+Je sauvegarde l’arbre dans un fichier avant de quitter. Pourquoi ? Parce que c’est frustrant pour l’utilisateur de perdre ses données après avoir travaillé dessus.
+
+10. Fonction repl
+C’est la boucle principale. J’ai choisi une structure simple : afficher l’invite, lire une commande, l’exécuter ou afficher un message d’erreur. Cette boucle est le point central où toutes les autres fonctions interagissent.
