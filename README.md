@@ -1,93 +1,32 @@
-# CC
-Fichier main.c
-
-main : Fonction principale qui lance la boucle REPL pour interagir avec l’utilisateur. Elle appelle repl() pour entrer dans la boucle de commandes, puis libère toute la mémoire allouée à l'arbre en appelant free_tree(root) avant de quitter.
-
-Fichier repl.c
-
-Ce fichier gère les commandes utilisateur et la sauvegarde de données.
-
-Fonctions de Gestion du Buffer d'Entrée
-
-create_input_buffer : Alloue et initialise un buffer pour stocker les commandes de l'utilisateur.
-
-print_prompt : Affiche l'invite de commande db > pour indiquer à l’utilisateur qu’il peut entrer une commande.
-
-read_input : Lit la commande de l’utilisateur depuis le terminal, la stocke dans le buffer d’entrée, et supprime le caractère de nouvelle ligne final.
-
-close_input_buffer : Libère la mémoire allouée pour le buffer d’entrée une fois qu’il n’est plus nécessaire.
-
-Fonctions de Gestion des Commandes
-
-handle_meta_command : Gère les méta-commandes spéciales, comme exit, pour quitter le programme. Si l’utilisateur entre exit, cette fonction sauvegarde l’état actuel de l’arbre, ferme le buffer d’entrée, et termine le programme.
-
-prepare_statement : Analyse la commande de l’utilisateur et détermine si elle correspond à une instruction SQL-like (insert, select, delete). Si oui, elle assigne le type correspondant à la structure Statement.
-
-execute_statement : Exécute l’instruction SQL-like en appelant la fonction appropriée de gestion de l’arbre :
-
-insert : Insère un nouveau nœud avec un identifiant id et un nom name.
-
-select : Affiche tous les nœuds de l'arbre dans l'ordre croissant des identifiants.
-
-delete : Supprime le nœud ayant l'identifiant spécifié.
-
-Fonctions de Sauvegarde et Chargement des Données
-
-load_database : Charge l'arbre depuis le fichier database.txt si le fichier existe, ce qui permet de récupérer les données des sessions précédentes.
-
-save_database : Sauvegarde l'état actuel de l'arbre dans le fichier database.txt, assurant la persistance des données pour les prochaines sessions.
-
-Fonction Principale de la Boucle REPL
-
-repl : Boucle principale qui reçoit les commandes de l'utilisateur, analyse leur type (meta ou statement), et exécute la fonction appropriée. Cette boucle est le cœur de l'interaction utilisateur.
-
 Fichier btree.c
+C’est ici que j’ai mis tout ce qui concerne l’arbre binaire. Chaque fonction a été pensée pour que l’arbre reste trié et efficace.
 
-Ce fichier implémente les fonctions principales de manipulation de l'arbre binaire de recherche, utilisées pour stocker et gérer les données.
+1. Fonction insert
+J’ai utilisé la récursivité parce que ça colle parfaitement avec la structure hiérarchique d’un arbre binaire. À chaque étape, on décide si on va à gauche ou à droite selon la valeur.
+J’ai aussi choisi un double pointeur (Node**) pour que, même si l’arbre est vide, on puisse facilement mettre à jour sa racine sans avoir à gérer ce cas à part dans repl.c.
 
+2. Fonction delete_node
+Pour supprimer un nœud, il y a trois cas à gérer :
 
-Fonctions de Base pour l'Arbre
+Le nœud est une feuille.
+Le nœud a un seul enfant.
+Le nœud a deux enfants.
+J’ai tout écrit dans une seule fonction pour que ça reste compact et facile à comprendre. Quand il y a deux enfants, je trouve le successeur avec find_minimum, ce qui évite de casser la structure de l’arbre. Pourquoi ? Parce que c’est une méthode classique et éprouvée pour garder un BST valide.
 
-insert : Insère un nœud dans l'arbre avec un identifiant id et un nom name. Cette fonction respecte la structure d'un arbre binaire de recherche en plaçant les valeurs inférieures à gauche et les valeurs supérieures à droite.
+3. Fonction find_minimum
+Pour trouver le minimum, on suit simplement le chemin le plus à gauche de l’arbre. J’ai préféré une approche itérative au lieu de récursive pour éviter d’empiler des appels inutiles. C’est rapide, clair et efficace.
 
-delete_node : Supprime un nœud ayant un identifiant id de l'arbre. Elle respecte les règles du BST en tenant compte de trois cas : suppression d'une feuille, d'un nœud avec un seul enfant, ou d'un nœud avec deux enfants.
+4. Fonction in_order
+J’ai utilisé un parcours in-order parce que c’est le moyen naturel de parcourir un arbre binaire dans l’ordre trié. Pourquoi récursif ? Parce que ça rend la logique très lisible : gauche → nœud courant → droite. C’est exactement ce qu’on veut pour afficher les données dans le bon ordre.
 
-find_minimum : Renvoie le nœud ayant la plus petite valeur dans un sous-arbre donné. Utilisé pour trouver le successeur lors de la suppression d'un nœud avec deux enfants.
+5. Fonction free_tree
+Cette fonction est essentielle pour éviter les fuites mémoire. J’ai utilisé une méthode récursive parce qu’il faut libérer chaque nœud individuellement, en commençant par les feuilles. Ça garantit que tout est bien nettoyé.
 
-in_order : Parcourt l'arbre en ordre croissant et affiche chaque nœud, ce qui permet de voir les données triées par identifiant.
+6. Fonction save_tree
+Pour sauvegarder l’arbre, j’ai utilisé une écriture récursive : chaque nœud est écrit dans un fichier, suivi de ses sous-arbres gauche et droit. Pourquoi ? Parce que ça reflète exactement la structure de l’arbre. C’est simple et ça garantit que les données sont faciles à recharger.
 
-free_tree : Libère la mémoire allouée pour tous les nœuds de l’arbre, pour éviter les fuites de mémoire à la fin du programme.
+7. Fonction load_tree
+Quand on recharge les données, on lit les nœuds un par un dans le même ordre qu’on les a sauvegardés. J’ai préféré cette approche parce qu’elle permet de reconstruire l’arbre exactement comme il était, sans avoir à recalculer quoi que ce soit.
 
-Fonctions de Sauvegarde et de Chargement
-
-print_table_header : Affiche l'en-tête de la table pour organiser l'affichage des nœuds.
-
-save_tree : Sauvegarde récursivement l'arbre dans un fichier, en enregistrant chaque nœud avec son id et son name.
-
-load_tree : Charge récursivement l’arbre depuis un fichier. Cette fonction crée un nœud pour chaque entrée et l'ajoute à l'arbre dans l'ordre.
-
-repl.h
-Ce fichier contient les définitions et les déclarations pour les structures et fonctions de l'interface utilisateur.
-
-Structures et Énumérations :
-
-MetaCommandResult, PrepareResult, StatementType : Types pour gérer les résultats des commandes et les types d’instructions (méta-commandes ou SQL-like).
-
-Statement : Structure pour représenter une instruction SQL-like, en stockant son type (insert, select, delete).
-
-InputBuffer : Structure pour gérer le buffer d’entrée utilisateur, avec les informations sur sa longueur.
-
-Fonctions du REPL :
-
-repl, create_input_buffer, read_input, close_input_buffer, handle_meta_command, prepare_statement, execute_statement, save_database, load_database.
-btree.h
-
-Ce fichier contient la structure de l'arbre binaire ainsi que les fonctions pour manipuler les nœuds de l'arbre.
-
-Structure Node : Définition de la structure d'un nœud de l'arbre, qui contient un identifiant id, un nom name, et des pointeurs vers les nœuds gauche et droit.
-
-Fonctions de Manipulation d'Arbre :
-
-insert, delete_node, find_minimum, in_order, free_tree, print_table_header, save_tree, load_tree.
-
-Cette documentation fournit une vue d'ensemble claire de chaque fonction, de leur rôle, et de leur organisation dans le programme. Elle est conçue pour être accessible et utile pour comprendre le code.
+8. Fonction print_table_header
+J’ai ajouté cette fonction pour afficher un en-tête propre avant de montrer les données. Pourquoi ? Parce que c’est plus clair pour l’utilisateur et ça donne un aspect bien organisé.
