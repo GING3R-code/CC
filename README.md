@@ -56,8 +56,11 @@ Cette fonction analyse les commandes pour voir si elles correspondent à insert,
 C’est le cœur de l’exécution. Elle appelle les fonctions de btree.c en fonction de la commande détectée :
 
 insert : Pour ajouter un nœud.
+
 select : Pour afficher l’arbre.
+
 delete : Pour retirer un nœud.
+
 J’ai séparé l’analyse (prepare_statement) et l’exécution pour garder les responsabilités claires.
 
 8. Fonction load_database
